@@ -1,1 +1,1 @@
-# pe_client_news
+# ai_news_application
