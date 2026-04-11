@@ -18,7 +18,7 @@ class NewsAPIProvider:
     def __init__(self, api_key: str = None):
         self.api_key = api_key or os.getenv("NEWS_API_KEY")
 
-    def fetch_recent_articles(
+    async def fetch_recent_articles(
         self, search_params: NewsSearchParams
     ) -> List[ArticleCandidate]:
         if not self.api_key:
@@ -28,18 +28,18 @@ class NewsAPIProvider:
             datetime.now(timezone.utc) - timedelta(days=search_params.since_days)
         ).isoformat()
 
-        response = httpx.get(
-            self.BASE_URL,
-            params={
-                "q": self._build_query(search_params),
-                "from": from_date,
-                "sortBy": "publishedAt",
-                "language": "en",
-                "pageSize": search_params.limit,
-                "apiKey": self.api_key,
-            },
-            timeout=20.0,
-        )
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.get(
+                self.BASE_URL,
+                params={
+                    "q": self._build_query(search_params),
+                    "from": from_date,
+                    "sortBy": "publishedAt",
+                    "language": "en",
+                    "pageSize": search_params.limit,
+                    "apiKey": self.api_key,
+                },
+            )
         response.raise_for_status()
 
         payload = response.json()

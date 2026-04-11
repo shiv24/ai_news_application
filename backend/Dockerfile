@@ -2,8 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+ENV PIP_DEFAULT_TIMEOUT=180 \
+    PIP_RETRIES=10 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --prefer-binary --no-cache-dir -r requirements.txt
 
 COPY . .
 

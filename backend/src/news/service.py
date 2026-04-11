@@ -8,7 +8,7 @@ class NewsService:
     def __init__(self, provider: Optional[NewsAPIProvider] = None):
         self.provider = provider or NewsAPIProvider()
 
-    def fetch_recent_articles(
+    async def fetch_recent_articles(
         self,
         company_name: str,
         ticker: Optional[str],
@@ -21,4 +21,4 @@ class NewsService:
             since_days=since_days,
             limit=limit,
         )
-        return self.provider.fetch_recent_articles(search_params)
+        return await self.provider.fetch_recent_articles(search_params)

@@ -1,0 +1,2 @@
+MAX_CHUNK_TOKENS = 8191
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
