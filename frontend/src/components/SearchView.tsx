@@ -6,7 +6,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { searchCompanies, type CompanyResult } from "@/services/companySearch";
 
 interface SearchViewProps {
-  onSearch: (query: string) => void;
+  onSearch: (domain: string, companyName: string) => void;
   error?: string | null;
 }
 
@@ -21,6 +21,7 @@ const SearchView = ({ onSearch, error }: SearchViewProps) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyResult | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,6 +54,7 @@ const SearchView = ({ onSearch, error }: SearchViewProps) => {
     setResults([]);
     setPage(1);
     setSearchError(null);
+    setSelectedCompany(null);
 
     searchCompanies(debouncedQuery, 1)
       .then((res) => {
@@ -101,15 +103,27 @@ const SearchView = ({ onSearch, error }: SearchViewProps) => {
   const handleSelect = (company: CompanyResult) => {
     setShowDropdown(false);
     setQuery(company.name);
-    onSearch(company.name);
+    setSelectedCompany(company);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      setShowDropdown(false);
-      onSearch(query.trim());
+    if (!query.trim()) return;
+
+    const normalizedQuery = query.trim().toLowerCase();
+    const exactMatch = results.find(
+      (company) => company.name.trim().toLowerCase() === normalizedQuery
+    );
+    const companyToUse = selectedCompany ?? exactMatch ?? results[0];
+
+    if (!companyToUse) {
+      setSearchError("Please select a company from the dropdown.");
+      return;
     }
+
+    setSearchError(null);
+    setShowDropdown(false);
+    onSearch(companyToUse.domain, companyToUse.name);
   };
 
   return (
@@ -134,7 +148,10 @@ const SearchView = ({ onSearch, error }: SearchViewProps) => {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setSelectedCompany(null);
+                }}
                 onFocus={() => {
                   if (results.length > 0 && debouncedQuery) setShowDropdown(true);
                 }}
@@ -220,8 +237,22 @@ const SearchView = ({ onSearch, error }: SearchViewProps) => {
 
         <p className="text-xs text-muted-foreground">
           Try{" "}
-          <button type="button" onClick={() => onSearch("Apple")} className="underline text-primary hover:text-primary/80">Apple</button> (public) or{" "}
-          <button type="button" onClick={() => onSearch("Stripe")} className="underline text-primary hover:text-primary/80">Stripe</button> (private)
+          <button
+            type="button"
+            onClick={() => setQuery("Apple")}
+            className="underline text-primary hover:text-primary/80"
+          >
+            Apple
+          </button>{" "}
+          (public) or{" "}
+          <button
+            type="button"
+            onClick={() => setQuery("Stripe")}
+            className="underline text-primary hover:text-primary/80"
+          >
+            Stripe
+          </button>{" "}
+          (private)
         </p>
       </div>
     </div>

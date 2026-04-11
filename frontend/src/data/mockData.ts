@@ -50,12 +50,31 @@ export interface FinancialInsights {
   investors_should_watch: string[];
 }
 
+export interface BackupSearchTheme {
+  theme: string;
+  why_it_matters: string;
+}
+
+export interface BackupSearchSource {
+  title: string;
+  url: string;
+}
+
+export interface BackupSearchAnalysis {
+  executive_summary: string;
+  key_themes: BackupSearchTheme[];
+  partner_talking_points: string[];
+  sources_used: BackupSearchSource[];
+}
+
 export interface CompanyBriefing {
   name: string;
   public_or_private: "public" | "private";
   ticker: string | null;
+  insufficient_information?: boolean;
   insights: Insights;
-  financial_insights?: FinancialInsights;
+  backup_search_analysis?: BackupSearchAnalysis | null;
+  financial_insights?: FinancialInsights | null;
 }
 
 // ── Mock data ──

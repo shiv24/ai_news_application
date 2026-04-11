@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CompanyBriefing } from "@/data/mockData";
 import ExecutiveSummary from "./ExecutiveSummary";
 import KeyThemes from "./KeyThemes";
@@ -19,6 +20,19 @@ interface Props {
 const BriefingDashboard = ({ briefing, onBack }: Props) => {
   const { insights } = briefing;
   const isPublic = briefing.public_or_private === "public";
+  const backupSearchAnalysis = briefing.backup_search_analysis;
+  const sourceUrls = Array.from(
+    new Set(
+      [
+        ...insights.key_themes.flatMap((item) => item.source_ids),
+        ...insights.risks.flatMap((item) => item.source_ids),
+        ...insights.opportunities.flatMap((item) => item.source_ids),
+        ...insights.recommendations_for_partner.flatMap((item) => item.source_ids),
+      ]
+        .map(extractUrlFromSourceId)
+        .filter((url): url is string => Boolean(url))
+    )
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,12 +71,104 @@ const BriefingDashboard = ({ briefing, onBack }: Props) => {
             <Recommendations items={insights.recommendations_for_partner} />
             <TalkingPoints points={insights.partner_talking_points} />
             <ConfidenceGaps gaps={insights.confidence_gaps} />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="h-4 w-1 rounded-full bg-primary" />
+                  Sources
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {sourceUrls.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No source links available.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {sourceUrls.map((url, i) => (
+                      <li key={`${url}-${i}`}>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-primary underline break-all hover:text-primary/80"
+                        >
+                          {url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
+        {backupSearchAnalysis && (
+          <div className="space-y-2 border-t pt-8">
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <div className="h-5 w-1 rounded-full bg-primary" />
+              General Briefing
+            </h2>
+            <div className="space-y-6">
+              <ExecutiveSummary summary={backupSearchAnalysis.executive_summary} />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="h-4 w-1 rounded-full bg-primary" />
+                    Key Themes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {backupSearchAnalysis.key_themes.map((theme, index) => (
+                      <div key={`${theme.theme}-${index}`} className="space-y-1">
+                        <p className="text-sm font-semibold text-foreground">
+                          {theme.theme}
+                        </p>
+                        <p className="text-sm leading-relaxed text-foreground/80">
+                          {theme.why_it_matters}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              <TalkingPoints points={backupSearchAnalysis.partner_talking_points} />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="h-4 w-1 rounded-full bg-primary" />
+                    Sources
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {backupSearchAnalysis.sources_used.map((source, index) => (
+                      <li key={`${source.url}-${index}`} className="space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {source.title}
+                        </p>
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm text-primary underline break-all hover:text-primary/80"
+                        >
+                          {source.url}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
         {/* Section 2: Financial Briefing (only if financial_insights present) */}
         {briefing.financial_insights && (
-          <div className="space-y-2">
+          <div className="space-y-2 border-t pt-8">
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
               <div className="h-5 w-1 rounded-full bg-primary" />
               Financial Briefing
@@ -77,5 +183,21 @@ const BriefingDashboard = ({ briefing, onBack }: Props) => {
     </div>
   );
 };
+
+function extractUrlFromSourceId(sourceId: string): string | null {
+  const separator = "::";
+  const firstSeparator = sourceId.indexOf(separator);
+  if (firstSeparator === -1) return null;
+
+  const candidateUrl = sourceId.slice(firstSeparator + separator.length);
+  if (
+    candidateUrl.startsWith("http://") ||
+    candidateUrl.startsWith("https://")
+  ) {
+    return candidateUrl;
+  }
+
+  return null;
+}
 
 export default BriefingDashboard;
