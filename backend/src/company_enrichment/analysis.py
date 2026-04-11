@@ -2,8 +2,13 @@ from src.company_enrichment.prompts import (
     SYSTEM_PROMPT,
     USER_PROMPT,
     FINANCIAL_ANALYSIS_PROMPT,
+    BACKUP_SEARCH_PROMPT,
 )
-from src.company_enrichment.schemas import CompanyFinancialInsights, CompanyInsights
+from src.company_enrichment.schemas import (
+    BackupSearchAnalysis,
+    CompanyFinancialInsights,
+    CompanyInsights,
+)
 from src.llm_client.openai_client import OpenAIClient
 
 
@@ -37,5 +42,25 @@ async def generate_company_financial_insights(
         input=prompt,
         tools=[{"type": "web_search"}],
         text_format=CompanyFinancialInsights,
+    )
+    return response.output_parsed
+
+
+async def generate_backup_search_analysis(
+    company_name: str,
+    ticker: str | None,
+    domain: str | None,
+) -> BackupSearchAnalysis:
+    client = OpenAIClient()
+    prompt = (
+        BACKUP_SEARCH_PROMPT.replace("{company_name}", company_name)
+        .replace("{ticker_or_none}", ticker or "None")
+        .replace("{domain}", domain or "None")
+    )
+    response = await client.client.responses.parse(
+        model="gpt-5.4",
+        input=prompt,
+        tools=[{"type": "web_search"}],
+        text_format=BackupSearchAnalysis,
     )
     return response.output_parsed

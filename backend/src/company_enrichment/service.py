@@ -11,6 +11,7 @@ from src.company_enrichment.documents import (
 )
 from src.company_enrichment.prompts import GENERAL_QUERY_PROMPT
 from src.company_enrichment.analysis import (
+    generate_backup_search_analysis,
     generate_company_insights,
     generate_company_financial_insights,
 )
@@ -36,8 +37,10 @@ vector_store = ChromaVectorStore()
 COMPANY_SEARCH_URL = "https://api.thecompaniesapi.com/v2/companies/by-name"
 
 
-async def enrich_company(payload: CompanyEnrichmentRequest):
-    logger.info("GOT INTO SERVICE.py")
+async def enrich_company(
+    payload: CompanyEnrichmentRequest,
+    domain: str | None = None,
+):
     ticker = payload.ticker if payload.public_or_private == "public" else None
     financial_insights_task = (
         asyncio.create_task(generate_company_financial_insights(ticker))
@@ -75,12 +78,22 @@ async def enrich_company(payload: CompanyEnrichmentRequest):
         query_text,
     )
     retrieved_context = format_retrieved_context(retrieved_chunks)
+    insufficient_information = len(retrieved_chunks) == 0
     insights = await generate_company_insights(
         company_name=payload.name,
         public_or_private=payload.public_or_private.value,
         retrieved_chunks=retrieved_context,
     )
     insights_payload = _normalize_insight_source_ids(insights.model_dump())
+    backup_search_analysis = (
+        await generate_backup_search_analysis(
+            company_name=payload.name,
+            ticker=ticker,
+            domain=domain,
+        )
+        if insufficient_information
+        else None
+    )
     financial_insights = (
         await financial_insights_task if financial_insights_task else None
     )
@@ -92,7 +105,11 @@ async def enrich_company(payload: CompanyEnrichmentRequest):
         "name": payload.name,
         "public_or_private": payload.public_or_private,
         "ticker": payload.ticker,
+        "insufficient_information": insufficient_information,
         "insights": insights_payload,
+        "backup_search_analysis": (
+            backup_search_analysis.model_dump() if backup_search_analysis else None
+        ),
         "financial_insights": (
             financial_insights.model_dump() if financial_insights else None
         ),
@@ -109,7 +126,7 @@ async def enrich_company_from_domain(
         public_or_private=parsed_company.public_or_private,
         ticker=parsed_company.ticker,
     )
-    return await enrich_company(enrichment_payload)
+    return await enrich_company(enrichment_payload, domain=payload.domain)
 
 
 async def search_companies_by_name(

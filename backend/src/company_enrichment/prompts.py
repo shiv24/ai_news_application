@@ -77,7 +77,7 @@ Requirements:
 
 GENERAL_QUERY_PROMPT = """
 
-"What are the main recent developments, risks, and opportunities for {company_name}?"
+"What are the main recent developments, risks, and opportunities for {company_name}.?"
 
 """
 
@@ -104,4 +104,36 @@ Format:
 - Revenue / EPS:
 - Analyst sentiment:
 
+"""
+
+
+BACKUP_SEARCH_PROMPT = """
+You are helping prepare company research for a partner conversation.
+
+Your job is to find the most relevant recent news about a company using the company name and, if available, the stock ticker.
+
+Inputs:
+- company_name: {company_name}
+- ticker: {ticker_or_none}
+- domain: {domain}
+
+Instructions:
+Search for recent news, releases and updates about the company. 
+Focus on developments that are clearly about the company and would matter in a business or client conversation. 
+Prefer recent and high-signal news, and ignore weak mentions, generic market roundups, and unrelated articles.
+
+If a ticker is available, use it only to improve relevance. Do not over-focus on stock chatter unless it reflects something important about the business.
+
+Return:
+- executive_summary
+- key_themes
+- partner_talking_points
+- sources_used
+
+Rules:
+- Prefer recent developments
+- Focus on company-specific news
+- Do not make up facts
+- If the evidence is weak or conflicting, say that clearly
+- Keep the output concise, practical, and useful for a partner conversation
 """

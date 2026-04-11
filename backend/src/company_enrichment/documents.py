@@ -1,3 +1,4 @@
+import html
 from typing import Any, Dict, List
 
 import tiktoken
@@ -23,20 +24,33 @@ def create_document_objects(articles: List[Dict[str, Any]]) -> List[PreparedDocu
         return []
 
     converter = DocumentConverter()
-    urls = [article["url"] for article in articles]
-
-    conversion_results = list(converter.convert_all(urls))
 
     prepared_documents: List[PreparedDocument] = []
-    for article, conversion_result in zip(articles, conversion_results):
+    for article in articles:
+        url = html.unescape(article["url"])
+
+        try:
+            conversion_result = converter.convert(url, raises_on_error=False)
+        except Exception:
+            continue
+
+        if str(getattr(conversion_result, "status", "")) not in {
+            "success",
+            "partial_success",
+        }:
+            continue
+
+        if getattr(conversion_result, "document", None) is None:
+            continue
+
         prepared_documents.append(
             PreparedDocument(
-                article_id=f"{article['provider']}::{article['url']}",
+                article_id=f"{article['provider']}::{url}",
                 docling_document=conversion_result.document,
                 metadata={
                     "provider": article.get("provider"),
                     "title": article.get("title"),
-                    "url": article.get("url"),
+                    "url": url,
                     "snippet": article.get("snippet"),
                     "publisher": article.get("publisher"),
                     "published_at": article.get("published_at"),

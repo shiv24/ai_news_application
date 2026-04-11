@@ -85,6 +85,29 @@ class CompanyFinancialInsights(BaseModel):
     investors_should_watch: List[str]
 
 
+class BackupSearchTheme(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    theme: str
+    why_it_matters: str
+
+
+class BackupSearchSource(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str
+    url: str
+
+
+class BackupSearchAnalysis(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    executive_summary: str
+    key_themes: List[BackupSearchTheme]
+    partner_talking_points: List[str]
+    sources_used: List[BackupSearchSource]
+
+
 class CompanySearchRequest(BaseModel):
     name: str = Field(..., min_length=1)
     page: int = Field(default=1, ge=1)
