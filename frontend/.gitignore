@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.DS_Store
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/
