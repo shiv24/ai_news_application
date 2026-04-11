@@ -24,11 +24,9 @@ class NewsService:
         )
         articles = await self.provider.fetch_recent_articles(search_params)
 
-        return articles
-
-        # return rank_news_articles(
-        #     articles=articles,
-        #     company_name=company_name,
-        #     ticker=ticker,
-        #     limit=limit,
-        # )
+        return rank_news_articles(
+            articles=articles,
+            company_name=company_name,
+            ticker=ticker,
+            limit=limit,
+        )

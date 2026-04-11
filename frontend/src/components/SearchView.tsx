@@ -167,6 +167,20 @@ const SearchView = ({ onSearch, error }: SearchViewProps) => {
             </Button>
           </form>
 
+          {selectedCompany && (
+            <div className="mt-3 rounded-lg border bg-card px-4 py-3 text-left">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Selected For Analysis
+              </p>
+              <p className="mt-1 text-sm font-medium text-foreground">
+                {selectedCompany.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {selectedCompany.domain}
+              </p>
+            </div>
+          )}
+
           {/* Dropdown */}
           {showDropdown && debouncedQuery && (
             <div

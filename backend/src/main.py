@@ -18,15 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Expose routes at /company and /companies/search for frontend usage.
 app.include_router(
     company_enrichment_router,
-    tags=["company-enrichment"],
-)
-
-app.include_router(
-    company_enrichment_router,
-    prefix="/enrichment",
     tags=["company-enrichment"],
 )
 

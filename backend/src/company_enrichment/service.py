@@ -9,6 +9,9 @@ from src.company_enrichment.documents import (
     chunk_prepared_documents,
     format_retrieved_context,
 )
+
+from src.company_enrichment.constants import COMPANY_SEARCH_URL
+
 from src.company_enrichment.prompts import GENERAL_QUERY_PROMPT
 from src.company_enrichment.analysis import (
     generate_backup_search_analysis,
@@ -34,7 +37,6 @@ from src.vector_store.chroma_store import ChromaVectorStore
 
 news_service = NewsService()
 vector_store = ChromaVectorStore()
-COMPANY_SEARCH_URL = "https://api.thecompaniesapi.com/v2/companies/by-name"
 
 
 async def enrich_company(
@@ -53,19 +55,12 @@ async def enrich_company(
     )
 
     recent_articles = [article.dict() for article in article_resp]
-
-    logger.info("Fetched recent articles")
-
-    filtered_articles = [
-        article
-        for article in recent_articles
-        if "yahoo.com" not in article.get("source_domain", "")
-    ]
-
-    logger.info("Filtered unsupported article domains")
-
-    docling_docs = await asyncio.to_thread(create_document_objects, filtered_articles)
+    logger.info("Fetched recent and relevant articles")
+    docling_docs = await asyncio.to_thread(create_document_objects, recent_articles)
+    logger.info("Created docling docs from articles")
     chunked_documents = await asyncio.to_thread(chunk_prepared_documents, docling_docs)
+    logger.info("Chunked articles")
+
     stored_count = await asyncio.to_thread(
         vector_store.store_chunks, payload.name, chunked_documents
     )
@@ -97,9 +92,6 @@ async def enrich_company(
     financial_insights = (
         await financial_insights_task if financial_insights_task else None
     )
-
-    logger.info("Stored chunks in Chroma")
-    logger.info("Retrieved chunk context:\n%s", retrieved_context)
 
     return {
         "name": payload.name,

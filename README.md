@@ -1,1 +1,24 @@
-# ai_news_application
+# AI Company Briefing
+
+This is a tool for executives to quickly get news based analysis of a company. If the company is public, there is a Financial Analysis component.
+
+There are two folders
+/backend which contains the fastapi backend
+/frontend which contains the react and typescript frontend
+
+To run the Backend:
+
+From the root of the repo
+
+1. Go into the backend folder with `cd backend`
+2. run `docker compose up --build`
+3. The API will be running locally on port 8000 and the endpoints can be accessible at [localhost:8000](http://localhost:8000/docs#/)
+
+To run the frontend:
+
+From the root of the repo
+
+1. Go into the frontend folder with `cd frontend`
+2. Install npm packages with `npm install`
+3. Run `npm run build`
+4. run `npm run dev`
