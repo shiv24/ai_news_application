@@ -1,5 +1,7 @@
 import os
 import re
+import hashlib
+from collections import defaultdict
 from typing import Any, Dict, List
 
 import chromadb
@@ -38,27 +40,56 @@ class ChromaVectorStore:
             return 0
 
         collection = self.get_or_create_company_collection(company_name)
+        article_groups = self._group_chunks_by_article(chunks)
 
         ids: List[str] = []
         documents: List[str] = []
         metadatas: List[Dict[str, Any]] = []
 
-        for chunk in chunks:
-            article_date = chunk.get("article_date")
-            if hasattr(article_date, "isoformat"):
-                article_date = article_date.isoformat()
-
-            ids.append(chunk["chunk_id"])
-            documents.append(chunk["chunk_text"])
-            metadatas.append(
-                {
-                    "article_url": chunk.get("article_url"),
-                    "article_title": chunk.get("article_title"),
-                    "article_publisher": chunk.get("article_publisher") or "",
-                    "article_date": article_date or "",
-                    "chunk_index": chunk.get("chunk_index"),
-                }
+        for article_url_key, article_chunks in article_groups.items():
+            sorted_article_chunks = sorted(
+                article_chunks, key=lambda chunk: chunk.get("chunk_index", 0)
             )
+            article_text = "\n".join(
+                chunk.get("chunk_text", "") for chunk in sorted_article_chunks
+            ).strip()
+            if not article_text:
+                continue
+
+            article_content_hash = self._hash_text(article_text)
+            article_cache_key = self._hash_text(
+                f"{article_url_key}|{article_content_hash}"
+            )
+
+            # Duplicate detection / cache check: skip if this article version
+            # already exists in the collection.
+            if self._article_cache_exists(collection, article_cache_key):
+                continue
+
+            article_id = article_cache_key[:24]
+
+            for chunk in sorted_article_chunks:
+                article_date = chunk.get("article_date")
+                if hasattr(article_date, "isoformat"):
+                    article_date = article_date.isoformat()
+
+                ids.append(chunk["chunk_id"])
+                documents.append(chunk["chunk_text"])
+                metadatas.append(
+                    {
+                        "article_url": chunk.get("article_url"),
+                        "article_content_hash": article_content_hash,
+                        "article_cache_key": article_cache_key,
+                        "article_id": article_id,
+                        "article_title": chunk.get("article_title"),
+                        "article_publisher": chunk.get("article_publisher") or "",
+                        "article_date": article_date or "",
+                        "chunk_index": chunk.get("chunk_index"),
+                    }
+                )
+
+        if not ids:
+            return 0
 
         collection.upsert(
             ids=ids,
@@ -113,3 +144,27 @@ class ChromaVectorStore:
             collection_name = "company"
 
         return collection_name
+
+    def _article_cache_exists(self, collection, article_cache_key: str) -> bool:
+        result = collection.get(
+            where={"article_cache_key": article_cache_key},
+            limit=1,
+        )
+        return len(result.get("ids") or []) > 0
+
+    def _group_chunks_by_article(
+        self, chunks: List[Dict[str, Any]]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        grouped_chunks: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+
+        for chunk in chunks:
+            article_url = str(chunk.get("article_url") or "").strip()
+            article_base_id = str(chunk.get("chunk_id", "")).split("::chunk-", 1)[0]
+            article_key = article_url or article_base_id
+            grouped_chunks[article_key].append(chunk)
+
+        return grouped_chunks
+
+    def _hash_text(self, text: str) -> str:
+        canonical_text = " ".join(text.split())
+        return hashlib.sha256(canonical_text.encode("utf-8")).hexdigest()

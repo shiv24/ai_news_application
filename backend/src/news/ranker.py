@@ -1,11 +1,18 @@
 from datetime import datetime, timezone
+import html
 import re
 from typing import List, Optional
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlsplit, urlunsplit
 
 from src.news.schemas import ArticleCandidate
 
 BLOCKED_DOMAINS = {"consent.yahoo.com"}
+TRACKING_QUERY_PARAMS = {
+    "gclid",
+    "fbclid",
+    "ref",
+    "ref_src",
+}
 
 HIGH_QUALITY_DOMAINS = {
     "reuters.com",
@@ -72,11 +79,12 @@ def rank_news_articles(
         if not article.url or not article.title or not article.published_at:
             continue
 
-        parsed = urlparse(article.url)
+        raw_url = html.unescape(article.url).strip()
+        parsed = urlparse(raw_url)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             continue
 
-        domain = (article.source_domain or parsed.netloc or "").lower()
+        domain = (parsed.netloc or "").lower()
         domain = domain.split(":")[0].strip(".")
         if not domain:
             continue
@@ -133,7 +141,7 @@ def rank_news_articles(
         event_hits = sum(1 for keyword in IMPORTANT_EVENT_KEYWORDS if keyword in text)
         score += min(event_hits, 4) * 0.75
 
-        scored_articles.append((score, article))
+        scored_articles.append((score, article, domain))
 
     # Deterministic ordering:
     # 1) higher score, 2) newer article, 3) title alphabetical.
@@ -145,11 +153,62 @@ def rank_news_articles(
         )
     )
 
-    ranked = [article for _, article in scored_articles]
-    return ranked[:limit] if limit is not None else ranked
+    selected = scored_articles[:limit] if limit is not None else scored_articles
+
+    ranked: List[ArticleCandidate] = []
+    for _, article, domain in selected:
+        normalized_url = _normalize_url(article.url) or html.unescape(article.url).strip()
+        normalized_domain = domain
+        parsed_normalized = urlparse(normalized_url)
+        if parsed_normalized.netloc:
+            normalized_domain = parsed_normalized.netloc.lower().split(":")[0].strip(".")
+
+        ranked.append(
+            article.model_copy(
+                update={
+                    "url": normalized_url,
+                    "source_domain": normalized_domain,
+                }
+            )
+        )
+
+    return ranked
 
 
 def _as_utc(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc)
+
+
+def _normalize_url(url: str) -> str:
+    raw_url = html.unescape(url).strip()
+    if not raw_url:
+        return ""
+
+    parsed = urlsplit(raw_url)
+    if not parsed.netloc:
+        return ""
+
+    filtered_query = [
+        (key, value)
+        for key, value in parse_qsl(parsed.query, keep_blank_values=False)
+        if not key.lower().startswith("utm_")
+        and key.lower() not in TRACKING_QUERY_PARAMS
+    ]
+    filtered_query.sort()
+
+    normalized_scheme = (parsed.scheme or "https").lower()
+    normalized_host = parsed.netloc.lower()
+    normalized_path = parsed.path.rstrip("/") or "/"
+    normalized_query = urlencode(filtered_query, doseq=True)
+
+    return urlunsplit(
+        (
+            normalized_scheme,
+            normalized_host,
+            normalized_path,
+            normalized_query,
+            "",
+        )
+    )
