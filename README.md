@@ -1,6 +1,6 @@
 # AI Company Briefing
 
-This is a tool for executives to quickly get news based analysis of a company. If the company is public, there is a Financial Analysis component.
+This is a tool for executives to quickly get news based analysis of a company. If no relevant and recent articles for the company can be found, a General web search is done to gather compnay specific data. If the company is public, there is a Financial Analysis component.
 
 There are two folders
 /backend which contains the fastapi backend
