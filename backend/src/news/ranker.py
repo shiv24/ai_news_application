@@ -46,6 +46,8 @@ IMPORTANT_EVENT_KEYWORDS = {
     "profit",
     "forecast",
     "results",
+    "buyback",
+    "share",
 }
 
 NAME_STOPWORDS = {
@@ -157,11 +159,15 @@ def rank_news_articles(
 
     ranked: List[ArticleCandidate] = []
     for _, article, domain in selected:
-        normalized_url = _normalize_url(article.url) or html.unescape(article.url).strip()
+        normalized_url = (
+            _normalize_url(article.url) or html.unescape(article.url).strip()
+        )
         normalized_domain = domain
         parsed_normalized = urlparse(normalized_url)
         if parsed_normalized.netloc:
-            normalized_domain = parsed_normalized.netloc.lower().split(":")[0].strip(".")
+            normalized_domain = (
+                parsed_normalized.netloc.lower().split(":")[0].strip(".")
+            )
 
         ranked.append(
             article.model_copy(

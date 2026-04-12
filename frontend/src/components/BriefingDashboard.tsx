@@ -122,7 +122,7 @@ const BriefingDashboard = ({ briefing, onBack }: Props) => {
 
         {backupSearchAnalysis && (
           <div className="space-y-2 border-t pt-8">
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-foreground flex underline underline-offset-2 items-center gap-2">
               <div className="h-5 w-1 rounded-full bg-primary" />
               General Briefing
             </h2>

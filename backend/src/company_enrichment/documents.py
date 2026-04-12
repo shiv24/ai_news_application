@@ -34,10 +34,9 @@ def create_document_objects(articles: List[Dict[str, Any]]) -> List[PreparedDocu
         except Exception:
             continue
 
-        if str(getattr(conversion_result, "status", "")) not in {
-            "success",
-            "partial_success",
-        }:
+        status = getattr(conversion_result, "status", "")
+        status_value = getattr(status, "value", status)
+        if str(status_value).lower() not in {"success", "partial_success"}:
             continue
 
         if getattr(conversion_result, "document", None) is None:

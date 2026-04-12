@@ -17,5 +17,5 @@ class ArticleCandidate(BaseModel):
 class NewsSearchParams(BaseModel):
     company_name: str
     ticker: Optional[str] = None
-    since_days: int = 14
-    limit: int = 20
+    since_days: int = 16
+    limit: int = 50

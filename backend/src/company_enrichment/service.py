@@ -44,34 +44,49 @@ async def enrich_company(
     domain: str | None = None,
 ):
     ticker = payload.ticker if payload.public_or_private == "public" else None
+    query_text = (
+        GENERAL_QUERY_PROMPT.format(company_name=payload.name).strip().strip('"')
+    )
     financial_insights_task = (
         asyncio.create_task(generate_company_financial_insights(ticker))
         if payload.public_or_private == "public" and ticker
         else None
-    )
-    article_resp = await news_service.fetch_recent_articles(
-        company_name=payload.name,
-        ticker=ticker,
-    )
-
-    recent_articles = [article.dict() for article in article_resp]
-    logger.info("Fetched recent and relevant articles")
-    docling_docs = await asyncio.to_thread(create_document_objects, recent_articles)
-    logger.info("Created docling docs from articles")
-    chunked_documents = await asyncio.to_thread(chunk_prepared_documents, docling_docs)
-    logger.info("Chunked articles")
-
-    stored_count = await asyncio.to_thread(
-        vector_store.store_chunks, payload.name, chunked_documents
-    )
-    query_text = (
-        GENERAL_QUERY_PROMPT.format(company_name=payload.name).strip().strip('"')
     )
     retrieved_chunks = await asyncio.to_thread(
         vector_store.query_chunks,
         payload.name,
         query_text,
     )
+    if not retrieved_chunks:
+        article_resp = await news_service.fetch_recent_articles(
+            company_name=payload.name,
+            ticker=ticker,
+        )
+
+        recent_articles = [article.dict() for article in article_resp]
+        logger.info(f"Fetched recent and relevant articles: {len(recent_articles)}")
+        docling_docs = await asyncio.to_thread(create_document_objects, recent_articles)
+        logger.info(f"Created docling docs from articles: {len(docling_docs)}")
+        logger.info("Starting chunking prepared documents")
+        chunked_documents = await asyncio.to_thread(
+            chunk_prepared_documents, docling_docs
+        )
+        logger.info(f"Chunked articles: {len(chunked_documents)}")
+
+        logger.info("Starting Chroma store")
+        stored_count = await asyncio.to_thread(
+            vector_store.store_chunks, payload.name, chunked_documents
+        )
+        logger.info(f"Stored chunks in Chroma: {stored_count}")
+        retrieved_chunks = await asyncio.to_thread(
+            vector_store.query_chunks,
+            payload.name,
+            query_text,
+        )
+        logger.info(f"Retrieved chunks after store: {len(retrieved_chunks)}")
+    else:
+        logger.info(f"Using cached Chroma chunks: {len(retrieved_chunks)}")
+
     retrieved_context = format_retrieved_context(retrieved_chunks)
     insufficient_information = len(retrieved_chunks) == 0
     insights = await generate_company_insights(

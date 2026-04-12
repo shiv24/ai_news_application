@@ -20,5 +20,6 @@ From the root of the repo
 
 1. Go into the frontend folder with `cd frontend`
 2. Install npm packages with `npm install`
-3. Run `npm run build`
-4. run `npm run dev`
+3. run `npm run dev`
+
+The frontend will now be accessible at [localhost:8080](http://localhost:8080/).
