@@ -2,7 +2,7 @@ import { useState } from "react";
 import SearchView from "@/components/SearchView";
 import LoadingState from "@/components/LoadingState";
 import BriefingDashboard from "@/components/BriefingDashboard";
-import type { CompanyBriefing } from "@/data/mockData";
+import type { CompanyBriefing } from "@/types/companyBriefing";
 import { generateCompanyBriefing } from "@/services/companyBriefing";
 
 type AppState = "search" | "loading" | "briefing";

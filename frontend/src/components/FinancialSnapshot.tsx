@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { FinancialInsights } from "@/data/mockData";
+import type { FinancialInsights } from "@/types/companyBriefing";
 
 const FinancialBriefing = ({ data }: { data: FinancialInsights }) => {
   const snapshotItems = [

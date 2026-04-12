@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { KeyTheme } from "@/data/mockData";
+import type { KeyTheme } from "@/types/companyBriefing";
 
 const KeyThemes = ({ themes }: { themes: KeyTheme[] }) => (
   <Card>

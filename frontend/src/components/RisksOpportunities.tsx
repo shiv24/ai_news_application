@@ -1,6 +1,6 @@
 import { AlertTriangle, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { RiskItem, OpportunityItem } from "@/data/mockData";
+import type { RiskItem, OpportunityItem } from "@/types/companyBriefing";
 
 interface Props {
   risks: RiskItem[];

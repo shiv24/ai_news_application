@@ -2,7 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { CompanyBriefing } from "@/data/mockData";
+import type { CompanyBriefing } from "@/types/companyBriefing";
 import ExecutiveSummary from "./ExecutiveSummary";
 import KeyThemes from "./KeyThemes";
 import RisksOpportunities from "./RisksOpportunities";

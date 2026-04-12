@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Recommendation } from "@/data/mockData";
+import type { Recommendation } from "@/types/companyBriefing";
 
 const Recommendations = ({ items }: { items: Recommendation[] }) => (
   <Card>
