@@ -1,25 +1,94 @@
 # AI Company Briefing
 
-This is a tool for executives to quickly get news based analysis of a company. If no relevant and recent articles for the company can be found, a General web search is done to gather compnay specific data. If the company is public, there is a Financial Analysis component.
+AI Company Briefing is a two-part application:
 
-There are two folders
-/backend which contains the fastapi backend
-/frontend which contains the react and typescript frontend
+- `backend/`: FastAPI service that searches companies, retrieves recent news, stores article chunks in Chroma, and generates structured company briefings.
+- `frontend/`: React + TypeScript app that calls the backend and renders the briefing UI.
 
-To run the Backend:
+## Local Setup
 
-From the root of the repo
+### Prerequisites
 
-1. Go into the backend folder with `cd backend`
-2. run `docker compose up --build`
-3. The API will be running locally on port 8000 and the endpoints can be accessible at [localhost:8000](http://localhost:8000/docs#/)
+- Docker and Docker Compose
+- Node.js and npm
 
-To run the frontend:
+### 1. Clone the repository
 
-From the root of the repo
+```bash
+git clone https://github.com/shiv24/ai_news_application.git
+cd ai_news_application
+```
 
-1. Go into the frontend folder with `cd frontend`
-2. Install npm packages with `npm install`
-3. run `npm run dev`
+### 2. Configure backend environment variables
 
-The frontend will now be accessible at [localhost:8080](http://localhost:8080/).
+Create `backend/.env` with the following values:
+
+```env
+OPENAI_API_KEY=your_openai_api_key
+NEWS_API_KEY=your_newsapi_key
+COMPANY_SEARCH_API_KEY=your_company_search_api_key
+```
+
+Backend variables:
+
+- `OPENAI_API_KEY`: Required. Used for OpenAI responses and embeddings.
+- `NEWS_API_KEY`: Required. Used to fetch recent news articles.
+- `COMPANY_SEARCH_API_KEY`: Required. Used for company lookup and company search.
+- `LOG_LEVEL`: Optional. Defaults to `INFO`.
+
+The backend Docker setup loads these values from `backend/.env`.
+
+### 3. Start the backend
+
+From the repo root:
+
+```bash
+cd backend
+docker compose up --build
+```
+
+The backend will be available at:
+
+- API: [http://localhost:8000](http://localhost:8000)
+- Swagger docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+### 4. Configure frontend environment variables
+
+Create `frontend/.env` with:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+Frontend variables:
+
+- `VITE_API_BASE_URL`: Optional. Base URL for the backend API. If omitted, the frontend falls back to `http://localhost:8000`.
+
+### 5. Start the frontend
+
+From the repo root:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend will be available at [http://localhost:8080](http://localhost:8080).
+
+## Project Structure
+
+```text
+ai_news_application/
+├── backend/
+│   ├── docker-compose.yml
+│   ├── Dockerfile
+│   └── src/
+└── frontend/
+    ├── package.json
+    └── src/
+```
+
+## Notes
+
+- Start the backend before using the frontend.
